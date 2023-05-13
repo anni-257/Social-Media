@@ -1,7 +1,8 @@
 const jwt=require("jsonwebtoken");
+const { error } = require("../utils/responseWrapper");
 module.exports=async (req,res,next)=>{
     if(!req.headers || !req.headers.authorization || !req.headers.authorization.startsWith("Bearer")){
-        return res.status(401).send("Authorization header is required")
+        return res.send(errorr(401,"Authorization header is required"));
     }
 
     // req?.headers?.authorization?.startsWith("Bearer") 
@@ -16,6 +17,6 @@ module.exports=async (req,res,next)=>{
         next();
     }catch(err){
         console.log(err);
-        return res.status(401).send("Invalid access key")
+        return res.send(error(401,"Invalid access key"));
     }
 }
