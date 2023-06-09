@@ -7,11 +7,11 @@ const {error,success}=require("../utils/responseWrapper")
 const signupController=async (req,res) =>{
     try {
         
-        const {email,password}=req.body;
+        const {name,email,password}=req.body;
 
-        if(!email || !password){
+        if(!email || !password || !name){
             //Bad Request
-            return res.send(error(400,"Email and Password are required..🙂"))
+            return res.send(error(400,"Name, Email and Password are required..🙂"))
         }
 
         const oldUser=await User.findOne({email});
@@ -30,16 +30,14 @@ const signupController=async (req,res) =>{
         // await user.save();
 
         const user=await User.create({
+            name,
             email,
             password:hashedPassword // storing new password
         })
+        res.send(success(201,"user created successfully"))
 
-        res.send(success(201,{
-            user
-        }))
-
-    } catch (err) {
-        console.log(err);
+    } catch (e) {
+        return res.send(error(500,e.message))
     }
 }
 
@@ -52,7 +50,7 @@ const loginController=async (req,res)=>{
             return res.send(error(403,"Email and Password are required..🙂"));
         }
 
-        const user=await User.findOne({email});
+        const user=await User.findOne({email}).select("+password"); // to get password field from user schema
         if(!user){
             return res.send(error(404,"User id isn't registered..🥲"))
         }
@@ -87,6 +85,18 @@ const loginController=async (req,res)=>{
 
 }
 
+const logoutController=async(req,res)=>{
+    try {
+        res.clearCookie('jwt',{
+            httpOnly:true,
+            secure:true
+        })
+        return res.send(success(200,"user logged out"));
+    } catch (e) {
+        return res.send(error(500,e.message))
+    }
+}
+
 // this api will check RefreshToken validity and generate a new AccessToken
 const refreshAccessTokenController=async (req,res)=>{
     // const {refreshToken} =req.body;
@@ -97,7 +107,7 @@ const refreshAccessTokenController=async (req,res)=>{
     const cookies=req.cookies; // this can be send empty 
 
     if(!cookies.jwt){
-        return res.send(error(403,"Refresh Token In Cookie Required..!!"));
+        return res.send(error(401,"Refresh Token In Cookie Required..!!"));
     }
 
     const refreshToken=cookies.jwt;
@@ -124,7 +134,7 @@ const generateAccessToken=(data)=>{
     try{
 
         const token=jwt.sign(data,process.env.ACCESS_TOKEN_PRIVATE_KEY,{
-            expiresIn:"15m"
+            expiresIn:"1d"
         });
         return token;
     }catch(err){
@@ -146,6 +156,7 @@ const generateRefreshToken=(data)=>{
 module.exports={
     signupController,
     loginController,
+    logoutController,
     refreshAccessTokenController
 }
 

@@ -12,7 +12,7 @@ const error=(statusCode,message)=>{
         statusCode,
         message
     }
-}
+} 
 
 module.exports={
     success,
